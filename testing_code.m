@@ -30,7 +30,7 @@ if ~LEGACY
 else
     % load a pre-loaded .mat file containing the trc data.
     f = 'offmed-TUG-standard1-TP.mat';
-    d = read_mat('offmed-TUG-standard1-TP.mat');
+    d = read_mat(f);
 end
 
 % look at a small section
