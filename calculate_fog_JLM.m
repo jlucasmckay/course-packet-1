@@ -44,51 +44,63 @@ end
 xVars = ["Top_Head_X"]';
 zVars = ["Top_Head_Z" "R_ASIS_Z" "L_ASIS_Z" "R_Heel_Z" "L_Heel_Z"]';
 
-% create the plot
+% create the plot - return the handle to the figure
 f1 = figure;
 set(gcf,'position',[100 100 650 550])
 
+% plot the x data vs. time
 subplot(4,1,1)
 plot(d.Time,d{:,xVars},'LineWidth',2);
 legend(xVars)
 xlabel("Time, Seconds")
 ylabel("X, mm")
 
+% plot the z data vs. time
 subplot(4,1,2:4)
 zPlots = plot(d.Time,d{:,zVars},'LineWidth',2);
 legend(zVars)
 xlabel("Time, Seconds")
 ylabel("Z, mm")
 
-
+% isolate the variables that we will perform frequency analysis on
 zVars = ["R_Heel_Z" "L_Heel_Z"]'
 
+% create a new figure
 f2 = figure;
 set(gcf,'position',[100 100 650 550])
 
+% there are only two z variables now, but this can be expanded if needed
 nr = length(zVars);
+% pre-allocating handles for graphics objects is always good practice
 ax = gobjects(nr,1);
 
+% loop through the (2) variables and make a plot
 for i = 1:nr
+    % save the handle to the subplot - we will use it later
     ax(i) = subplot(nr,1,i);
+    % calculate the spectrum
     p = pspectrum(d{:,zVars(i)},Fs,'spectrogram','OverlapPercent',99,'MinThreshold',-10,'FrequencyResolution',1,'Reassign',true);
+    % call "pspectrum" to draw the spectrum; for speed we could consider moving
+    % the plotting code out into its own loop as it would not run on the cluster.
     pspectrum(d{:,zVars(i)},Fs,'spectrogram','OverlapPercent',99,'MinThreshold',-10,'FrequencyResolution',1,'Reassign',true);
+    % I don't find colorbars super instructive
     colorbar(ax(i),'off')
     title(zVars(i))
     ylim([0 maxFreq])
     
+    % superimpose the time-varying power
     hold on
     p = bandpowerwrapper(d{:,zVars(i)},Fs,Frange,250);
     h = plot(d.Time,p*maxFreq/maxProp,'r','clipping','on','LineWidth',4);
 
-    % this will break if the above code is changed. need to access elements
-    % by name.
+    % this will break if the above code is modified, so be careful - it is preferable
+    % to access elements by name. however, all it is doing is copying the color of the
+    % earlier plots to the current plot.
     set(h,'color',zPlots(i+3).Color)
     legend(h,zVars(i)+" Freeze Band Power (nu)")
 end
 
+% linkaxes is very useful - sets the x and y limits of the subplots to be equal. 
 linkaxes(ax)
-
-
 
 end
